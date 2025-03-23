@@ -1,0 +1,15 @@
+{
+  "name": "express-simple-starter",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "axios": "^1.8.4",
+    "express": "^4.21.2",
+    "jsdom": "^26.0.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.4.0"
+  }
+}
