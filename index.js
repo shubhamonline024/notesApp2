@@ -1,20 +1,26 @@
-const express = require('express');
-const axios = require('axios');
-const { JSDOM } = require('jsdom');
-const { Readability } = require('@mozilla/readability');
-const puppeteer = require('puppeteer');
+require("dotenv").config();
+const express = require("express");
+const axios = require("axios");
+const { JSDOM } = require("jsdom");
+const { Readability } = require("@mozilla/readability");
+const puppeteer = require("puppeteer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get('/:blogUrl', async (req, res) => {
+app.get("/", async (req, res) => {
   try {
-    let blogUrl = decodeURIComponent(req.params.blogUrl);
-    console.log('Fetching:', blogUrl);
+    const url = req.query.link ? req.query.link : null;
+    if (!url) {
+      return res.status(400).send("NO URL FOUND");
+    }
+
+    // Decode the URL safely
+    const blogUrl = decodeURIComponent(url);
 
     // Fetch the blog page
     const response = await axios.get(blogUrl);
-    const html = await response.data;
+    const html = response.data; // Directly access response.data as it's already resolved
 
     // Parse HTML with jsdom
     const doc = new JSDOM(html, { url: blogUrl });
@@ -22,28 +28,36 @@ app.get('/:blogUrl', async (req, res) => {
     const article = reader.parse();
 
     if (!article) {
-      return res.status(500).send('Could not extract readable content.');
+      return res.status(500).send("Could not extract readable content.");
     }
 
-    // Generate PDF
+    // Generate PDF from the extracted content
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.setContent(article.content);
-    const pdfBuffer = await page.pdf({ format: 'A4' });
+    await page.setContent(article.content, {
+      waitUntil: "networkidle0",
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true, // Include background graphics (useful if your page has background colors or images)
+      margin: { top: "0.8in", bottom: "0.8in", left: "0.8in", right: "0.8in" },
+    });
     await browser.close();
 
+    const finalBuffer = Buffer.from(pdfBuffer);
     // Send the PDF file to the user
     res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="blog.pdf"`,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="blog.pdf"`,
     });
-    res.send(pdfBuffer);
+    res.end(finalBuffer);
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Error processing the blog page.');
+    console.error("Error processing blog page:", error);
+    res.status(500).send("Error processing the blog page.");
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

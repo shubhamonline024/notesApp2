@@ -2,14 +2,16 @@
   "name": "express-simple-starter",
   "private": true,
   "scripts": {
-    "start": "node index.js"
+    "start": "nodemon index.js"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsdom": "^26.0.0",
     "node-fetch": "^3.3.2",
+    "nodemon": "^3.1.9",
     "puppeteer": "^24.4.0"
   }
 }
